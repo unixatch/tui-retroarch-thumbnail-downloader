@@ -1,0 +1,15 @@
+{
+  "name": "ottieni-immagini-gioco",
+  "version": "1.0.0",
+  "description": "",
+  "main": "ottieni-immagini-gioco.mjs",
+  "scripts": {
+    "test": "node ottieni-immagini-gioco.mjs"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "inquirer": "^9.2.10",
+    "node-html-parser": "^6.1.6"
+  }
+}
