@@ -1,11 +1,25 @@
+// USA I BOOKMARK❗
+
+// Node Modules
 import fs from "fs"
 import path from "path"
+import deepStrictEqual from "assert"
 import https from "https"
+
 import inquirer from "inquirer"
-import * as nodeHtmlParser from "node-html-parser"
+const { convert } = await import("html-to-text");
+
 let pathPerLeImmagini = "../../storage/downloads/"
 const quitPress = (_, key) => {
   if (key.name === "q") process.exit();
+}
+function escapeRegExp(string) {
+  // ❗ . * + ? ^ $ { } ( ) | [ ] \ ❗
+  // $& —→ tutta la stringa identificata
+  return string
+    .replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+  // https://stackoverflow.com/a/6969486
 }
 const sleep = time => {
   return new Promise(resolve => {
@@ -21,9 +35,15 @@ const ottieniPagina = async (urlLista, timeout = 1, tentativi = 0) => {
     let fetched_data = await fetch(urlLista, {
       signal: AbortSignal.timeout(timeInMs)
     })
-    return await fetched_data.text();
+    return convert(await fetched_data.text(), {
+      selectors: [{ 
+        selector: 'a', options: { 
+          ignoreHref: true 
+        } 
+      }]
+    })
   } catch(err) {
-    if (err.code === "ERR_SOCKET_CONNECTION_TIMEOUT") {
+    if (err?.cause?.code === "ERR_SOCKET_CONNECTION_TIMEOUT" || err.name === "TimeoutError") {
       // Massimo di tentativi prima che si chiude in modo fatale
       if (tentativi === 6) { 
         console.error("Impossible stabilire una connessione col server")
@@ -32,20 +52,17 @@ const ottieniPagina = async (urlLista, timeout = 1, tentativi = 0) => {
       
       // In caso fallisce, ritenta
       console.log(`Fallita la richiesta della pagina dopo ${time}s, tento di nuovo...`)
-      return ottieniPagina(urlLista, timeout + 1, tentativi + 1);
+      return await ottieniPagina(urlLista, timeout + 1, tentativi + 1);
     }
     console.error(err)
+    return process.exit();
   }
 }
 
 
 
-// Ottiene la lista di piattaforme
-const listaPrincipale = await ottieniPagina("https://thumbnails.libretro.com/");
-const parsedDOM = nodeHtmlParser.parse(listaPrincipale);
-const parsedLinks = nodeHtmlParser.parse(parsedDOM.querySelectorAll("body pre")[0].text)
-
 // Chiede all'utente una piattaforma da cercare
+const listaPrincipale = await ottieniPagina("https://thumbnails.libretro.com/");
 const richiestaPiattaforma = async () => {
   await inquirer
   .prompt({
@@ -54,25 +71,31 @@ const richiestaPiattaforma = async () => {
   })
   .then(async (answer) => {
     // Chiude il prompt a richiesta dell'utente
-    if (/^(quit|q)(?!=.*)$/i.test(answer.piattaforma)) return process.exit();
+    if (/^(quit|q)(?!=.*)$/i
+        .test(answer.piattaforma)) return process.exit();
+    if (!answer.piattaforma) return await richiestaPiattaforma();
     
-    const piattaformeTrovate = [];
-    const linksLength = parsedLinks.childNodes.length;
-    const regex = new RegExp(answer.piattaforma, "gi");
-    // Ottiene i risultati
-    for (let i=0; i < linksLength; i++) {
-      const platform = parsedLinks.childNodes[i].textContent;
-      
-      if (platform.match(regex)) {
-        piattaformeTrovate.push(platform)
-      }
-    }
+    // [\w\d \-]* ↓ 
+    // ogni parola, numero, trattino o spazio
+    const regex = new RegExp(
+      `.*${escapeRegExp(answer.piattaforma)}.*\/`,
+      "gi"
+    );
+    const matchAllResults = [
+      ...listaPrincipale.matchAll(regex)
+    ];
     // In caso non trova niente
-    if (piattaformeTrovate.length === 0) {
+    if (matchAllResults.length === 0) {
       process.stdout.cursorTo(0);
       process.stdout.clearLine(0);
       return richiestaPiattaforma();
     }
+    
+    // Ottiene i risultati
+    const piattaformeTrovate = [];
+    matchAllResults.forEach((platform) => {
+      piattaformeTrovate.push(platform[0])
+    })
     
     
     // Chiude il prompt quando si preme q
@@ -97,66 +120,104 @@ await richiestaPiattaforma()
 
 async function sceltaGioco(piattaforma) {
   // Ottiene la lista d'immagini dei giochi
-  const rawDOM = await ottieniPagina(`https://thumbnails.libretro.com/${encodeURI(piattaforma)}Named_Snaps/`)
+  const rawDOMs = {
+    Named_Boxarts: await ottieniPagina(`https://thumbnails.libretro.com/${encodeURI(piattaforma)}Named_Boxarts/`),
+    Named_Snaps: await ottieniPagina(`https://thumbnails.libretro.com/${encodeURI(piattaforma)}Named_Snaps/`),
+    Named_Titles: await ottieniPagina(`https://thumbnails.libretro.com/${encodeURI(piattaforma)}Named_Titles/`)
+  }
   
-  let parsedDOM = nodeHtmlParser.parse(rawDOM)
-  let parsedLinks = nodeHtmlParser.parse(parsedDOM.querySelectorAll("body pre")[0].text);
   
-  
-  const giochiTrovati = [];
+  const giochiTrovati = {
+    Named_Boxarts: [],
+    Named_Snaps: [],
+    Named_Titles: []
+  };
+  const pageNames = Object.keys(giochiTrovati);
   const richiestaGioco = async () => {
     await inquirer
     .prompt({
-      name: "gioco",
+      name: "giocoRichiesto",
       message: "Quale gioco?"
     })
-    .then(answer => {
+    .then(async (answer) => {
       // Chiude il prompt a richiesta dell'utente
-      if (/^(quit|q)(?!=.*)$/i.test(answer.gioco)) return process.exit();
+      if (/^(quit|q)(?!=.*)$/i
+          .test(answer.giocoRichiesto)) return process.exit();
+      if (!answer.giocoRichiesto) return await richiestaGioco;
       
-      const lengthGiochi = parsedLinks.childNodes.length;
-      const regex = new RegExp(answer.gioco, "gi");
+      const regex = new RegExp(
+        `.*${escapeRegExp(answer.giocoRichiesto)}.*\.png`, 
+        "gi"
+      );
       // Ottiene i risultati
-      for (let i=0; i < lengthGiochi; i++) {
-        let gioco = parsedLinks.childNodes[i].textContent;
-        
-        if (gioco.match(regex)) {
-          giochiTrovati.push(gioco)
-        }
+      pageNames.forEach(nomePagina => {
+        const pagina = rawDOMs[nomePagina];
+        const matchAllResults = [
+          ...pagina.matchAll(regex)
+        ];
+        matchAllResults.forEach(gioco => {
+          giochiTrovati[nomePagina].push(gioco[0])
+        })
+      })
+      // In caso non trova niente
+      if (giochiTrovati.length === 0) {
+        process.stdout.cursorTo(0);
+        process.stdout.clearLine(0);
+        return richiestaGioco();
       }
     })
-    // In caso non trova niente
-    if (giochiTrovati.length === 0) {
-      process.stdout.cursorTo(0);
-      process.stdout.clearLine(0);
-      return richiestaGioco();
-    }
   }
-  
   await richiestaGioco()
+  
+  
+  // Controlla se viene trovata la stessa roba su tutte le pagine
+  const reducer = (lastArray, pageName) => {
+    // Fa un "break" e 
+    // ritorna false alla fine
+    if (!lastArray) return false
+    
+    const currentArray = giochiTrovati[pageName];
+    const isSame = deepStrictEqual(lastArray, currentArray);
+    
+    // Per aggiornare 
+    // l'accumulatore di reduce
+    if (isSame) {
+      return listOfPage
+    } else return false
+  }
+  const initialValue = giochiTrovati[pageNames[0]];
+  
+  const areAllEqual = Array.isArray( 
+    pageNames.reduce(reducer, initialValue) 
+  ) ? true : false
+  
+  console.log(areAllEqual, giochiTrovati)
+  // Cerca rayman
+  process.exit()
   
   // Chiude il prompt quando si preme q
   process.stdin.on('keypress', quitPress);
   await inquirer
   .prompt({
     type: "list",
-    name: "giochiTrovati",
+    name: "gioco",
     message: "Trovati i seguenti:",
     choices: giochiTrovati
   })
   .then(answer => {
     process.stdin.removeListener("keypress", quitPress)
-    let nomeGiocoPerScaricare;
     // Ottiene il nome delle
-    // copertine da scaricare 
-    for (let i=0; i < giochiTrovati.length; i++) {
-      const gioco = giochiTrovati[i];
-      
-      if (gioco === answer.giochiTrovati) {
-        nomeGiocoPerScaricare = gioco;
-        break
+    // copertine da scaricare
+    let nomeGiocoPerScaricare;
+    pageNames.forEach((page) => {
+      const list = giochiTrovati[page];
+      for (const gioco of list) {
+        if (gioco === answer.gioco) {
+          nomeGiocoPerScaricare = gioco;
+          break
+        }
       }
-    }
+    })
     
     // Scarica le immagini
     const pathParse = path.parse(nomeGiocoPerScaricare);
