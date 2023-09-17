@@ -1,0 +1,15 @@
+# This is the folder where 
+# the images will be downloaded to
+pathPerLeImmagini: ""
+
+# It preloads the pages on 
+# the 2nd part of the script 
+# for faster-showing prompts
+# (Enable it if you have a fast connection)
+preloadPages: false
+
+# Enable cache or not
+cache: true
+# How often the cache gets renewed if found
+# (Number is in days)
+cacheFrequency: 4
