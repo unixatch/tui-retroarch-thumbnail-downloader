@@ -125,7 +125,7 @@ const getURL = async (url, wantBody = false, tries = 1) => {
           `\n        trying again...${normal}\n`
         )
       }
-      return await getURL(url, false, tries + 1);
+      return await getURL(url, wantBody, tries + 1);
     }
     console.error(err)
     return process.exit();

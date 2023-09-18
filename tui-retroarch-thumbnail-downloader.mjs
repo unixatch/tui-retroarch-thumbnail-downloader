@@ -202,7 +202,7 @@ async function thumbnailChoice(wentBack) {
 }
 const foundNames = await thumbnailChoice();
 
-const download = async thumbnailName => {
+const download = async () => {
   const { Readable } = await import('stream');
   const { finished } = await import("stream/promises");
   // Downloads the images\thumbnails
@@ -240,7 +240,26 @@ const download = async thumbnailName => {
         Readable.fromWeb(imgBody).pipe(fileStream)
       )
     } catch (e) {
-      console.log(e)
+      // Shows the error and deletes the empty file
+      // if it even exists that is...
+      // + it doesn't show the message below the catch
+      if (fs.existsSync(filePath)) {
+        fs.readFile(filePath, (err, file) => {
+          if (file.length === 0) {
+            console.log(`${dimRed}Couldn't create the file "${
+              underline +
+              thumbnailName +
+              normal+red
+            }"${normal}`)
+            return fs.unlinkSync(filePath);
+          }
+          console.log(e)
+        })
+      } else {
+        console.log(`${red}The path leads to nowhere,\ncheck your download destination folder${normal}`)
+        process.exit()
+      }
+      break;
     }
     
     const typeOfImg = Object.keys(formattedGameNames)[n-1];
@@ -250,4 +269,4 @@ const download = async thumbnailName => {
     }"${normal}`)
   }
 }
-await download(foundNames)
+await download()
