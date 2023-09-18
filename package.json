@@ -1,15 +1,43 @@
 {
-  "name": "ottieni-immagini-gioco",
+  "name": "tui-retroarch-thumbnail-downloader",
   "version": "1.0.0",
-  "description": "",
-  "main": "ottieni-immagini-gioco.mjs",
-  "scripts": {
-    "test": "node ottieni-immagini-gioco.mjs"
+  "description": "Allows you to download thumbnails from Retroarch's servers with a search + list functionality",
+  "homepage": "https://github.com/unixatch/tui-retroarch-thumbnail-downloader/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/unixatch/tui-retroarch-thumbnail-downloader.git"
   },
-  "author": "",
-  "license": "ISC",
+  "bugs": "https://github.com/unixatch/tui-retroarch-thumbnail-downloader/issues",
+  "keywords": [
+    "multiplatform",
+    "tui",
+    "retroarch",
+    "download",
+    "downloader",
+    "thumbnail",
+    "search",
+    "match",
+    "find",
+    "list",
+    "inquirer"
+  ],
+  "preferGlobal": true,
+  "main": "tui-retroarch-thumbnail-downloader.mjs",
+  "bin": {
+    "tuiRetroarchTD": "tui-retroarch-thumbnail-downloader.mjs"
+  },
+  "scripts": {
+    "test": "node tui-retroarch-thumbnail-downloader.mjs",
+    "postinstall": "node createConfigYAML.mjs"
+  },
+  "author": "unixatch",
+  "license": "GPL-2.0-or-later",
   "dependencies": {
+    "@inquirer/confirm": "^2.0.12",
     "html-to-text": "^9.0.5",
-    "inquirer": "^9.2.10"
+    "inquirer": "^9.2.10",
+    "inquirer-file-tree-selection-prompt": "^2.0.5",
+    "inquirer-search-list": "^1.2.6",
+    "yaml": "^2.3.2"
   }
 }
