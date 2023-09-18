@@ -22,7 +22,7 @@ function declareColors() {
 declareColors()
 function escapeRegExp(string) {
   // ❗ . * + ? ^ $ { } ( ) | [ ] \ ❗
-  // $& —→ tutta la stringa identificata
+  // $& —→ the whole string being identified/matched
   return string
     .replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
@@ -81,15 +81,16 @@ let __filename2 = fileURLToPath(import.meta.url);
 const getCurrentFileName = loc => fileURLToPath(loc);
 const __dirname = dirname(__filename2);
 
-// Ottiene il file HTML della pagina
-const ottieniPagina = async (url, wantBody = false, timeout = 1, tentativi = 1) => {
-  const time = (timeout ** 2);
+// Obtains the HTML file of the page
+const getURL = async (url, wantBody = false, tries = 1) => {
+  const time = (tries ** 2);
   const timeInMs = time * 1000;
   
   try {
     let fetched_data = await fetch(url, {
       signal: AbortSignal.timeout(timeInMs)
     })
+    if (time > 4) clearLastLines([0, -4])
     if (wantBody) return await fetched_data.body;
     return convert(await fetched_data.text(), {
       selectors: [{
@@ -103,28 +104,28 @@ const ottieniPagina = async (url, wantBody = false, timeout = 1, tentativi = 1) 
         || err?.cause?.code === "UND_ERR_CONNECT_TIMEOUT"
         || err.name === "TimeoutError"
         || err.name === "AbortError") {
-      // Massimo di tentativi prima che si chiude in modo fatale
-      if (tentativi === 4) { 
-        console.log(`${red}Impossible stabilire una connessione col server dopo ${
+      if (tries > 2) clearLastLines([0, -4])
+      // Maximum number of attempts before it fatally closes
+      if (tries === 4) { 
+        console.log(`${red}Unable to establish a connection with the server after ${
             normal+underline + 
             time
           }s${normal}\n`)
         return process.exit();
       }
       
-      // In caso fallisce, ritenta
-      if (tentativi > 2) clearLastLines([0, -4])
+      // In case it fails, try again
       if (time > 1) {
         console.log(
-          `${dimGray}Fallita la richiesta dopo ${
+          `${dimGray}Failed the request of the page after ${
             normal+underline + 
             time
-          }s${normal+dimGray} della pagina:`,
+          }s${normal+dimGray}:`,
           `\n    "${(url > strLimit) ? url.substr(0, strLimit-3)+"..." : url}"`, 
-          `\n        tento di nuovo...${normal}\n`
+          `\n        trying again...${normal}\n`
         )
       }
-      return await ottieniPagina(url, false, timeout + 1, tentativi + 1);
+      return await getURL(url, false, tries + 1);
     }
     console.error(err)
     return process.exit();
@@ -141,5 +142,5 @@ export {
   strLimit,
   addRemove_quitPress,
   clearLastLines,
-  ottieniPagina
+  getURL
 }

@@ -1,6 +1,4 @@
 #!/usr/bin/env node
-// USA I BOOKMARK❗
-
 import fs from "fs"
 import path from "path"
 
@@ -17,7 +15,7 @@ import {
   strLimit,
   addRemove_quitPress,
   clearLastLines,
-  ottieniPagina
+  getURL
 } from "./utils.mjs"
 inquirer.registerPrompt('search-list', inquirerSearchList);
 
@@ -40,20 +38,20 @@ let isBackAction = {
 declareColors()
 
 
-const listaPrincipale = await ottieniPagina("https://thumbnails.libretro.com/");
+const platformsList = await getURL("https://thumbnails.libretro.com/");
 // All platforms in an array 
 // with "INDEX OF /" and "../" removed
 const regex = new RegExp(".*\/", "gi");
 const matchAllResults = [
-  ...listaPrincipale.matchAll(regex)
+  ...platformsList.matchAll(regex)
 ].map(platform => platform[0]);
 
 matchAllResults.splice(0, 2)
 
-// Chiede all'utente una piattaforma da cercare
+// Asks the user to search & select a platform
 let platform;
 let isSamePlatform = false;
-const richiestaPiattaforma = async () => {
+const requestPlatform = async () => {
   if (isBackAction.normal) {
     clearLastLines([0, -2])
   } else if (isBackAction.increased) {
@@ -65,7 +63,7 @@ const richiestaPiattaforma = async () => {
   await inquirer.prompt({
     type: "search-list",
     name: "platform",
-    message: "Quale piattaforma?",
+    message: "Which platform?",
     suffix: `${dimGray}\n(Press ctrl-q to quit)${normal}`,
     choices: matchAllResults,
     pageSize: 20
@@ -75,9 +73,9 @@ const richiestaPiattaforma = async () => {
     if (platform === answer.platform) return isSamePlatform = true;
     platform = answer.platform
   })
-  if (isBackAction.normal) return await sceltaGioco(true);
+  if (isBackAction.normal) return await thumbnailChoice(true);
 }
-await richiestaPiattaforma();
+await requestPlatform();
 
 let pageURLs = {
   Named_Snaps: `https://thumbnails.libretro.com/${encodeURI(platform)}Named_Snaps/`,
@@ -92,8 +90,8 @@ let rawPageTexts = {
 const pageNames = Object.keys(pageURLs);
 
 let formattedGameNames;
-async function sceltaGioco(wentBack) {
-  const nomiTrovati = {
+async function thumbnailChoice(wentBack) {
+  const foundNames = {
     Named_Snaps: "",
     Named_Boxarts: "",
     Named_Titles: ""
@@ -118,7 +116,7 @@ async function sceltaGioco(wentBack) {
   }
   if (preloadPages) {
     pageNames.forEach(async (name) => {
-      rawPageTexts[name] = await ottieniPagina(pageURLs[name]);
+      rawPageTexts[name] = await getURL(pageURLs[name]);
     })
   }
   
@@ -126,7 +124,7 @@ async function sceltaGioco(wentBack) {
   for (const page of pageNames) {
     // Skips the download if downloaded once
     if (rawPageTexts[page] === "") {
-      rawPageTexts[page] = await ottieniPagina(pageURLs[page]);
+      rawPageTexts[page] = await getURL(pageURLs[page]);
     }
     
     // All PNGs inside an array + skip option at top
@@ -143,9 +141,9 @@ async function sceltaGioco(wentBack) {
     let isSameNameAvailable;
     let earlierName;
     if (indexForOf > 0) {
-      earlierName = (nomiTrovati[pageNames[indexForOf-1]] === "skip")
+      earlierName = (foundNames[pageNames[indexForOf-1]] === "skip")
         ? "skip"
-        : nomiTrovati[pageNames[indexForOf-1]];
+        : foundNames[pageNames[indexForOf-1]];
       
       if (earlierName !== "skip") {
         isSameNameAvailable = !matchAllResults.every(name => name !== earlierName);
@@ -161,7 +159,7 @@ async function sceltaGioco(wentBack) {
       await inquirer.prompt({
         type: "search-list",
         name: "gameName",
-        message: "Scegli tra uno dei giochi:",
+        message: "Choose a thumbnail:",
         suffix: `${dimGray}\n(Press ctrl-q to quit)${normal}`,
         choices: matchAllResults,
         pageSize: 20
@@ -169,26 +167,26 @@ async function sceltaGioco(wentBack) {
       .then(answer => {
         addRemove_quitPress("close")
         if (answer.gameName === "<skip-to-next-page>") {
-          nomiTrovati[page] = "skip";
-        } else nomiTrovati[page] = answer.gameName;
+          foundNames[page] = "skip";
+        } else foundNames[page] = answer.gameName;
         if (answer.gameName === "<go-back>") return isBackAction.normal = true;
         
         indexForOf += 1;
       })
-      if (isBackAction.normal) return await richiestaPiattaforma();
-    } else nomiTrovati[page] = earlierName;
+      if (isBackAction.normal) return await requestPlatform();
+    } else foundNames[page] = earlierName;
   }
   clearLastLines([0, -2])
   formattedGameNames = {
-    Screenshot: (nomiTrovati.Named_Snaps.length > strLimit) 
-      ? nomiTrovati.Named_Snaps.substr(0, strLimit-6)+"...png" 
-      : nomiTrovati.Named_Snaps,
-    Boxart: (nomiTrovati.Named_Boxarts.length > strLimit) 
-      ? nomiTrovati.Named_Boxarts.substr(0, strLimit-6)+"...png" 
-      : nomiTrovati.Named_Boxarts,
-    Title_screen: (nomiTrovati.Named_Titles.length > strLimit) 
-      ? nomiTrovati.Named_Titles.substr(0, strLimit-6)+"...png" 
-      : nomiTrovati.Named_Titles
+    Screenshot: (foundNames.Named_Snaps.length > strLimit) 
+      ? foundNames.Named_Snaps.substr(0, strLimit-6)+"...png" 
+      : foundNames.Named_Snaps,
+    Boxart: (foundNames.Named_Boxarts.length > strLimit) 
+      ? foundNames.Named_Boxarts.substr(0, strLimit-6)+"...png" 
+      : foundNames.Named_Boxarts,
+    Title_screen: (foundNames.Named_Titles.length > strLimit) 
+      ? foundNames.Named_Titles.substr(0, strLimit-6)+"...png" 
+      : foundNames.Named_Titles
   }
   console.log(`${bold}This is what will be downloaded${normal}\n${dimGray}(only for displaying it if it's truncated)${normal}`)
   console.log(formattedGameNames)
@@ -198,21 +196,21 @@ async function sceltaGioco(wentBack) {
   })
   if (!answer) {
     isBackAction.increased = true
-    return await richiestaPiattaforma();
+    return await requestPlatform();
   } else console.log() // Adds a space
-  return nomiTrovati
+  return foundNames
 }
-const nomiTrovati = await sceltaGioco();
+const foundNames = await thumbnailChoice();
 
-const download = async nomeGiocoDaScaricare => {
+const download = async thumbnailName => {
   const { Readable } = await import('stream');
   const { finished } = await import("stream/promises");
-  // Scarica le immagini
+  // Downloads the images\thumbnails
   for (const n of [1, 2, 3]) {
-    const nomeGiocoDaScaricare = nomiTrovati[pageNames[n-1]];
-    if (nomeGiocoDaScaricare === "skip") continue;
+    const thumbnailName = foundNames[pageNames[n-1]];
+    if (thumbnailName === "skip") continue;
     
-    const pathParse = path.parse(nomeGiocoDaScaricare);
+    const pathParse = path.parse(thumbnailName);
     
     if (typeof downloadDestination !== "string") {
       throw new TypeError("The path is not in string form")
@@ -225,16 +223,16 @@ const download = async nomeGiocoDaScaricare => {
                      `(${n})` + 
                      pathParse.ext;
     
-    // Decide il tipo di copertina
-    let tipoDiCopertina = `${pageNames[n-1]}/`;
-    const urlPerScaricare = `https://thumbnails.libretro.com/${
+    // Decides what type of thumbnail
+    let thumbnailType = `${pageNames[n-1]}/`;
+    const thumbnailURL = `https://thumbnails.libretro.com/${
       encodeURI(platform) + 
-      tipoDiCopertina + 
-      encodeURI(nomeGiocoDaScaricare)
+      thumbnailType + 
+      encodeURI(thumbnailName)
     }`;
     
     // Gets a ReadableStream body
-    const imgBody = await ottieniPagina(urlPerScaricare, true);
+    const imgBody = await getURL(thumbnailURL, true);
     // Writes to file image
     const fileStream = fs.createWriteStream(filePath);
     try {
@@ -252,4 +250,4 @@ const download = async nomeGiocoDaScaricare => {
     }"${normal}`)
   }
 }
-await download(nomiTrovati)
+await download(foundNames)
