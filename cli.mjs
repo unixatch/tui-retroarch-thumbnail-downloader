@@ -9,28 +9,14 @@ import YAML from "yaml"
 import inquirer from "inquirer"
 import inquirerFileTreeSelection from "inquirer-file-tree-selection-prompt"
 import configYAMLFilePath from "./createConfigYAML.mjs"
-import { __dirname } from "./utils.mjs"
+import { 
+  __dirname, declareColors, onlyUserArgs
+} from "./utils.mjs"
 inquirer.registerPrompt("file-tree-selection", inquirerFileTreeSelection)
 
 
-// Custom formatting
-const normal= "\x1b[0m",
-  bold= "\x1b[1m",
-  italics= "\x1b[3m",
-  underline= "\x1b[4m",
-  // Actual colors
-  dimGrayBold= "\x1b[37;2;1m",
-  dimGray= "\x1b[37;2m",
-  green= "\x1b[32m",
-  dimGreen= "\x1b[32;2m",
-  red= "\x1b[31;1m",
-  dimRed= "\x1b[31;2m";
+declareColors()
 
-const onlyUserArgs = args => {
-  // Removes the node's exec path and js file path
-  args.shift(); args.shift()
-  return args;
-}
 const quitPress = (_, key) => {
   if (key.name === "q") process.exit();
 }
@@ -109,7 +95,7 @@ const actUpOnPassedArgs = async (args) => {
     }
   }
 }
-const askForDirectory = async (configObject) => {
+const askForDirectory = async () => {
   addRemove_quitPress("open")
   await inquirer.prompt({
     type: "file-tree-selection",
@@ -123,17 +109,16 @@ const askForDirectory = async (configObject) => {
     // Removes it when done
     addRemove_quitPress("close")
     
-    // Adds the selected path and continues
-    configObject.object
-      .get("screenshotsDirPaths")
-      .get("mobile")
-      .set("terminalEmu", answer.selected);
+    // Adds the selected path and writes to file
+    const configFile = YAML.parseDocument(readFileSync(configYAMLFilePath).toString());
+    configFile
+      .set("downloadDestination", answer.selected);
     const finalObject = YAML.stringify(
-      configObject.object, { 
+      configFile, { 
         lineWidth: 0 // Disables folding
       }
     );
-    writeFileSync(configObject.path, finalObject)
+    writeFileSync(configYAMLFilePath, finalObject)
   })
 }
 const setConfigValue = value => {
@@ -157,7 +142,11 @@ const setConfigValue = value => {
   }
   
   const configFilePath = configYAMLFilePath;
-  const configFile = YAML.parseDocument(readFileSync(configFilePath).toString());
+  const configFile = [
+    YAML.parseDocument(readFileSync(configFilePath).toString()),
+    YAML.parse(readFileSync(configFilePath).toString())
+  ];
+  const listOfOptions = Object.keys(configFile[1]);
   // Must be a property available inside config.yaml
   if (!listOfOptions.includes(property)) {
     console.log(red+`'${
@@ -168,24 +157,27 @@ const setConfigValue = value => {
     process.exit()
   }
   
+  
   // Inserts the given value
-  switch (property) {
+  switch (propertyValue) {
     case "true":
       propertyValue = true
+      configFile[0].set(property, propertyValue);
       break;
     case "false":
       propertyValue = false
+      configFile[0].set(property, propertyValue);
       break;
 
     default:
       if (!isNaN(Number(propertyValue))) {
         propertyValue = Number(propertyValue)
       }
-      configFile.set(property, propertyValue);
+      configFile[0].set(property, propertyValue);
   }
   // Writes the changes to file
   const configFile_toString = YAML.stringify(
-    configFile[1], { 
+    configFile[0], { 
       lineWidth: 0 // Disables folding
     }
   );
@@ -235,6 +227,9 @@ const help = () => {
       
     ${green}--help${normal}, ${green}-h${normal}, ${green}/h${normal}, ${green}/?${normal}:
       ${dimGray+italics}Shows this help message${normal}
+    
+    ${green}--version${normal}, ${green}-v${normal}, ${green}/v${normal}:
+      ${dimGray+italics}Shows the installed version${normal}
   `
   console.log(helpText)
   // It'll be inserted at a later date

@@ -27,7 +27,7 @@ await actUpOnPassedArgs(process.argv)
 // Options
 const configPath = configYAMLFilePath;
 const { 
-  pathPerLeImmagini,
+  downloadDestination,
   preloadPages,
   // cache,
 //   cacheFrequency
@@ -214,13 +214,13 @@ const download = async nomeGiocoDaScaricare => {
     
     const pathParse = path.parse(nomeGiocoDaScaricare);
     
-    if (typeof pathPerLeImmagini !== "string") {
+    if (typeof downloadDestination !== "string") {
       throw new TypeError("The path is not in string form")
     }
-    if (!fs.existsSync(pathPerLeImmagini)) {
+    if (!fs.existsSync(downloadDestination)) {
       throw new ReferenceError("Path leads to nowhere")
     }
-    const filePath = pathPerLeImmagini + 
+    const filePath = downloadDestination + 
                      pathParse.name + 
                      `(${n})` + 
                      pathParse.ext;

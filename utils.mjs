@@ -12,9 +12,12 @@ function declareColors() {
   global.underline= "\x1b[4m"
   // Actual colors
   global.yellow= "\x1b[33;1m"
+  global.green= "\x1b[32m"
+  global.dimGreen= "\x1b[32;2m"
   global.red= "\x1b[31;1m"
   global.dimRed= "\x1b[31;2m"
   global.dimGray= "\x1b[37;2m"
+  global.dimGrayBold= "\x1b[37;2;1m"
 }
 declareColors()
 function escapeRegExp(string) {
@@ -29,6 +32,11 @@ const sleep = time => {
   return new Promise(resolve => {
     setTimeout(() => resolve(), time);
   })
+}
+const onlyUserArgs = args => {
+  // Removes the node's exec path and js file path
+  args.shift(); args.shift()
+  return args;
 }
 
 const addRemove_quitPress = (request, func) => {
@@ -128,6 +136,7 @@ export {
   declareColors,
   escapeRegExp,
   sleep,
+  onlyUserArgs,
   strLimit,
   addRemove_quitPress,
   clearLastLines,

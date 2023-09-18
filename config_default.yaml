@@ -9,7 +9,7 @@ pathPerLeImmagini: ""
 preloadPages: false
 
 # Enable cache or not
-cache: true
+#cache: true
 # How often the cache gets renewed if found
 # (Number is in days)
-cacheFrequency: 4
+#cacheFrequency: 4
