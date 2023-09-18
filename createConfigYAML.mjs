@@ -1,5 +1,5 @@
 import { platform, env, exit } from "process"
-import { existsSync, copyFileSync } from "fs"
+import { existsSync, mkdirSync, copyFileSync } from "fs"
 import { join } from "path"
 
 let configFolder;
@@ -15,8 +15,11 @@ switch (platform) {
     configFolder = env.HOME + "/.local/share";
 }
 
-const configFileFolder = join(configFolder, "ottieni-immagini-gioco");
+const configFileFolder = join(configFolder, "tui-retroarch-thumbnail-downloader");
 const completePath = join(configFileFolder, "config.yaml");
+
+// In case there's no config folder
+if (!existsSync(configFileFolder)) mkdirSync(configFileFolder);
 
 // In case there's no matching file inside the location
 if (!existsSync(completePath)) copyFileSync("config_default.yaml", completePath);

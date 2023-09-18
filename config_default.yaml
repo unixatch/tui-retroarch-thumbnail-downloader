@@ -1,6 +1,6 @@
 # This is the folder where 
 # the images will be downloaded to
-pathPerLeImmagini: ""
+downloadDestination: ""
 
 # It preloads the pages on 
 # the 2nd part of the script 
