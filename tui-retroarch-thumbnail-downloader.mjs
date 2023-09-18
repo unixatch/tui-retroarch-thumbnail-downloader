@@ -118,7 +118,7 @@ async function sceltaGioco(wentBack) {
   }
   if (preloadPages) {
     pageNames.forEach(async (name) => {
-      rawPageTexts[page] = await ottieniPagina(pageURLs[page]);
+      rawPageTexts[name] = await ottieniPagina(pageURLs[name]);
     })
   }
   
@@ -220,7 +220,7 @@ const download = async nomeGiocoDaScaricare => {
     if (!fs.existsSync(downloadDestination)) {
       throw new ReferenceError("Path leads to nowhere")
     }
-    const filePath = downloadDestination + 
+    const filePath = path.join(downloadDestination, path.sep) + 
                      pathParse.name + 
                      `(${n})` + 
                      pathParse.ext;

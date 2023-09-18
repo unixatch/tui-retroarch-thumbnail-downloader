@@ -5,8 +5,8 @@ downloadDestination: ""
 # It preloads the pages on 
 # the 2nd part of the script 
 # for faster-showing prompts
-# (Enable it if you have a fast connection)
-preloadPages: false
+# (Disable it if you have a really slow connection)
+preloadPages: true
 
 # Enable cache or not
 #cache: true

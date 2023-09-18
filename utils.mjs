@@ -101,7 +101,8 @@ const ottieniPagina = async (url, wantBody = false, timeout = 1, tentativi = 1) 
   } catch(err) {
     if (err?.cause?.code === "ERR_SOCKET_CONNECTION_TIMEOUT" 
         || err?.cause?.code === "UND_ERR_CONNECT_TIMEOUT"
-        || err.name === "TimeoutError") {
+        || err.name === "TimeoutError"
+        || err.name === "AbortError") {
       // Massimo di tentativi prima che si chiude in modo fatale
       if (tentativi === 4) { 
         console.log(`${red}Impossible stabilire una connessione col server dopo ${
