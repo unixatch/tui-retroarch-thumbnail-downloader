@@ -43,6 +43,10 @@ const actUpOnPassedArgs = async (args) => {
           process.exit()
         }
         case /^(--config-set|-s|\/s)$/.test(arg) && arg: {
+          // In case there's no other argument
+          const indexOfArg = newArguments.indexOf(arg);
+          if (newArguments[indexOfArg + 1] === undefined) throw new ReferenceError("Missing necessary argument");
+          
           lastParam = "settingUp"
           break;
         }
@@ -99,7 +103,8 @@ const askForDirectory = async () => {
   addRemove_quitPress("open")
   await inquirer.prompt({
     type: "file-tree-selection",
-    message: "Pick the screenshots directory:",
+    message: "Pick the download destination:",
+    suffix: `${dimGray}\n(Press ctrl-q to quit)${normal}`,
     name: "selected",
     pageSize: 20,
     enableGoUpperDirectory: true,
