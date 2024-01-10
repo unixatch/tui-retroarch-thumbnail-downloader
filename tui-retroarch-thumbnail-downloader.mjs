@@ -14,8 +14,7 @@ import {
   sleep,
   strLimit,
   addRemove_quitPress,
-  clearLastLines,
-  getURL
+  clearLastLines
 } from "./utils.mjs"
 inquirer.registerPrompt('search-list', inquirerSearchList);
 
@@ -27,9 +26,25 @@ const configPath = configYAMLFilePath;
 const { 
   downloadDestination,
   preloadPages,
+  ignoreExpiredCertificate,
   // cache,
 //   cacheFrequency
 } = YAML.parse(fs.readFileSync(configPath).toString());
+global.ignoreExpiredCertificate = ignoreExpiredCertificate;
+
+// In case the user wants to ignore the certificate
+if (ignoreExpiredCertificate) {
+  const originalEmitWarning = process.emitWarning;
+  process.emitWarning = (warning, options) => {
+    if (warning && warning?.includes('NODE_TLS_REJECT_UNAUTHORIZED')) return;
+
+    return originalEmitWarning.call(process, warning, options)
+  }
+  process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+}
+// Because of the "ignoreExpiredCertificate" option,
+// it's here instead of the normal import
+const { getURL } = await import("./utils.mjs");
 
 let isBackAction = {
   normal: false,

@@ -8,6 +8,10 @@ downloadDestination: ""
 # (Disable it if you have a really slow connection)
 preloadPages: true
 
+# It ignores any expired
+# certificates if enabled
+ignoreExpiredCertificate: false
+
 # Enable cache or not
 #cache: true
 # How often the cache gets renewed if found
