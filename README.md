@@ -28,3 +28,9 @@ to configure the script with the correct path
 You'll need to either type `tuiRetroarchTD` in the terminal or `node tui-retroarch-thumbnail-downloader.mjs` in the same folder of where the package is installed
 
 Read [COMMAND LINE PARAMETERS](COMMAND-LINE-PARAMETERS.md) for more information about the available parameters
+
+## What changes have been made?
+
+Check out the [CHANGELOG](CHANGELOG.md) file for more information.
+
+It will include all changes being made in each version.
