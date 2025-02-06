@@ -1,6 +1,6 @@
 {
   "name": "tui-retroarch-thumbnail-downloader",
-  "version": "1.1.0",
+  "version": "1.1.5",
   "description": "Allows you to download thumbnails from Retroarch's servers with a search + list functionality",
   "homepage": "https://github.com/unixatch/tui-retroarch-thumbnail-downloader/",
   "repository": {
