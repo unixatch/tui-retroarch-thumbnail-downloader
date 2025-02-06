@@ -18,8 +18,6 @@
 import { platform, env, exit } from "process"
 import { existsSync, mkdirSync, copyFileSync, readFileSync, writeFileSync } from "fs"
 import { join, basename } from "path"
-import { parseDocument } from "yaml"
-import { updateUserConfig, declareColors } from "./utils.mjs"
 
 let configFolder;
 switch (platform) {
@@ -48,7 +46,8 @@ if (basename(process.argv[1]).includes("createConfigYAML.mjs")) {
   if (!existsSync(completePath)) {
     copyFileSync("config_default.yaml", completePath);
   } else {
-    declareColors();
+    const { updateUserConfig } = await import("./utils/installer_utils.mjs");
+    const { parseDocument } = await import("yaml");
     const oldUserConfig = parseDocument(readFileSync(completePath).toString());
     const defaultConfigFile = parseDocument(readFileSync("config_default.yaml").toString());
     

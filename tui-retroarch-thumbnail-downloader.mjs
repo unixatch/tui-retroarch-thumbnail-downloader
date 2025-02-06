@@ -16,30 +16,32 @@
     along with tui-retroarch-thumbnail-downloader.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-import fs from "fs"
-import path from "path"
+// In case the user passes some arguments
+const userArgs = process.argv.slice(2);
+if (userArgs.length > 0) {
+  const { actUpOnPassedArgs } = await import("./cli.mjs");
+  await actUpOnPassedArgs(process.argv)
+}
+const { default: fs } = await import("fs");
+const { default: path } = await import("path");
 
-import inquirer from "inquirer"
-import inquirerSearchList from "inquirer-search-list"
-import confirm from '@inquirer/confirm'
-import YAML from "yaml"
-import actUpOnPassedArgs from "./cli.mjs"
-import configYAMLFilePath from "./createConfigYAML.mjs"
-import {
-  declareColors,
+const { default: inquirer } = await import("inquirer");
+const { default: inquirerSearchList } = await import("inquirer-search-list");
+const { default: YAML } = await import("yaml");
+const { default: configPath } = await import("./createConfigYAML.mjs");
+const {
+  getURL,
   escapeRegExp,
   sleep,
   strLimit,
   addRemove_quitPress,
   clearLastLines
-} from "./utils.mjs"
+} = await import("./utils/utils.mjs");
 inquirer.registerPrompt('search-list', inquirerSearchList);
+let asyncImport_confirm = "";
 
-// In case the user passes some arguments
-await actUpOnPassedArgs(process.argv)
 
 // Options
-const configPath = configYAMLFilePath;
 const { 
   downloadDestination,
   preloadPages,
@@ -220,9 +222,13 @@ async function thumbnailChoice(wentBack) {
       ? foundNames.Named_Titles.substr(0, strLimit-6)+"...png" 
       : foundNames.Named_Titles
   }
+  if (asyncImport_confirm === "") {
+    const { default: confirm } = await import('@inquirer/confirm');
+    asyncImport_confirm = confirm;
+  }
   console.log(`${bold}This is what will be downloaded${normal}\n${dimGray}(only for displaying it if it's truncated)${normal}`)
   console.log(formattedGameNames)
-  const answer = await confirm({
+  const answer = await asyncImport_confirm({
     message: "Proceed?",
     default: true
   })

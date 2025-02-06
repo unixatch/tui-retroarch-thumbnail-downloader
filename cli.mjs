@@ -22,17 +22,10 @@ import {
 } from "fs"
 import { execSync } from "child_process"
 import { join, sep } from "path"
-import YAML from "yaml"
-import inquirer from "inquirer"
-import inquirerFileTreeSelection from "inquirer-file-tree-selection-prompt"
+
 import configYAMLFilePath from "./createConfigYAML.mjs"
-import { 
-  __dirname, declareColors, onlyUserArgs
-} from "./utils.mjs"
-inquirer.registerPrompt("file-tree-selection", inquirerFileTreeSelection)
+import { __dirname } from "./utils/cli_utils.mjs"
 
-
-declareColors()
 
 const quitPress = (_, key) => {
   if (key.name === "q") process.exit();
@@ -51,7 +44,7 @@ const addRemove_quitPress = request => {
 
 const actUpOnPassedArgs = async (args) => {
   let lastParam;
-  const newArguments = onlyUserArgs(args);
+  const newArguments = args.slice(2);
   if (newArguments.length !== 0) {
     for (const arg of newArguments) {
       switch (arg) {
@@ -117,6 +110,11 @@ const actUpOnPassedArgs = async (args) => {
   }
 }
 const askForDirectory = async () => {
+  const { default: inquirer } = await import("inquirer");
+  const { default: inquirerFileTreeSelection } = await import("inquirer-file-tree-selection-prompt");
+  inquirer.registerPrompt("file-tree-selection", inquirerFileTreeSelection)
+  const { default: YAML } = await import("yaml");
+  
   addRemove_quitPress("open")
   await inquirer.prompt({
     type: "file-tree-selection",
@@ -143,7 +141,7 @@ const askForDirectory = async () => {
     writeFileSync(configYAMLFilePath, finalObject)
   })
 }
-const setConfigValue = value => {
+const setConfigValue = async value => {
   // Must include a ,
   if (!value.includes(",")) {
     throw new TypeError("String with 'property, value' needed")
@@ -162,6 +160,7 @@ const setConfigValue = value => {
       || propertyPlusValue.length > 2) {
     throw new SyntaxError("String with 'property, value' needed")
   }
+  const { default: YAML } = await import("yaml");
   
   const configFilePath = configYAMLFilePath;
   const configFile = [
@@ -205,13 +204,17 @@ const setConfigValue = value => {
   );
   writeFileSync(configFilePath, configFile_toString)
 }
-const showConfigValues = () => {
+const showConfigValues = async () => {
+  const { default: YAML } = await import("yaml");
+  
   const configFilePath = configYAMLFilePath;
   const configFile = YAML.parse(readFileSync(configFilePath).toString());
   
   console.log(configFile);
 }
-const showConfigValuesAsTable = () => {
+const showConfigValuesAsTable = async () => {
+  const { default: YAML } = await import("yaml");
+  
   const configFilePath = configYAMLFilePath;
   const configFile = YAML.parse(readFileSync(configFilePath).toString());
   
