@@ -61,24 +61,20 @@ if (ignoreExpiredCertificate) {
   }
   process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 }
-// Because of the "ignoreExpiredCertificate" option,
-// it's here instead of the normal import
-const { getURL } = await import("./utils.mjs");
 
 let isBackAction = {
   normal: false,
   increased: false
 };
-declareColors()
 
 
 const platformsList = await getURL("https://thumbnails.libretro.com/");
 // All platforms in an array 
 // with "INDEX OF /" and "../" removed
-const regex = new RegExp(".*\/", "gi");
+const regex = new RegExp("\\[/icons/folder\.gif\\](.*\/)2", "gi");
 const matchAllResults = [
   ...platformsList.matchAll(regex)
-].map(platform => platform[0]);
+].map(platform => platform[1]);
 
 matchAllResults.splice(0, 2)
 
@@ -162,10 +158,10 @@ async function thumbnailChoice(wentBack) {
     }
     
     // All PNGs inside an array + skip option at top
-    const regex = new RegExp(".*\.png", "gi");
+    const regex = new RegExp("\\[IMG\\] \\[/icons/image2\.gif\\](.*\.png)", "gi");
     const matchAllResults = [
       ...rawPageTexts[page].matchAll(regex)
-    ].map(gamePicFilename => gamePicFilename[0]);
+    ].map(gamePicFilename => gamePicFilename[1]);
     matchAllResults.unshift(
       "<skip-to-next-page>",
       "<go-back>"
