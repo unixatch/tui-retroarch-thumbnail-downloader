@@ -225,8 +225,8 @@ const deleteCache = () => {
   // code...
 }
 const help = () => {
-  const helpText = `${underline}fixRetroarchImagePlaylist${normal}
-  ${dimGrayBold}Fixes RetroArch's image playlist file${normal}
+  const helpText = `${underline}tuiRetroarchTD${normal}
+  ${dimGrayBold}Allows you to download thumbnails from Retroarch's servers with a search + list functionality${normal}
   
   Available parameters:
     ${green}--config${normal}, ${green}-c${normal}, ${green}/c${normal}:
@@ -268,4 +268,4 @@ const version = () => {
   console.log(`${green + version + normal}`)
 }
 
-export default actUpOnPassedArgs
+export { actUpOnPassedArgs }
